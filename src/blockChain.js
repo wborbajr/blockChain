@@ -1,3 +1,5 @@
+'use strict';
+
 let hash = require('object-hash');
 
 const TARGET_HASH = hash(1406);
@@ -19,6 +21,14 @@ class BlockChain {
         this.curr_transactions = [];
 
     }
+
+    getLastBlock(callback) {
+        // Get last block from database
+        return blockChainModel.findOne({}, null, { sort : { _id: -1 }, limit: 1 }, (err, block) => {
+            if(err) return console.error("Cannot find las Block");
+            return callback(block);
+        });
+    }
         
     addNewBlock(prevHash) {
         let block = {
@@ -32,20 +42,28 @@ class BlockChain {
 
             block.hash = hash(block);
 
-            // Add it to the instance Sace it on the DB console Success
-            let newBlock = new blockChainModel(block);
-            newBlock.save((err) => {
-                if(err) return console.log(chalk.red("Cannot save Block to DB", err));
-                console.log(chalk.green("Block saved on the Database"));
+            this.getLastBlock((lastBlock) => {
+
+                if(lastBlock) {
+                    block.prevHash = lastBlock.hash;
+                }
+
+                // Add it to the instance Sace it on the DB console Success
+                let newBlock = new blockChainModel(block);
+                newBlock.save((err) => {
+                    if(err) return console.log(chalk.red("Cannot save Block to DB", err));
+                    console.log(chalk.green("Block saved on the Database"));
+                });
+
+                // Add to chain
+                this
+                    .chain
+                    .push(block);
+                this.curr_transactions = [];
+
+                return block;
             });
 
-            // Add to chain
-            this
-                .chain
-                .push(block);
-            this.curr_transactions = [];
-
-            return block;
         }
 
     }

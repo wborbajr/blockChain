@@ -1,3 +1,5 @@
+'use strict';
+
 let hash = require('object-hash');
 
 const TARGET_HASH = 1406;
